@@ -1,9 +1,10 @@
 __author__ = 'krzysiek'
 from BeautifulSoup import BeautifulSoup
 import urllib2
-# import thread
+import thread
 bands=[]
 i=0
+threadsCount=5
 class Band:
     name=""
     telephone=""
@@ -12,6 +13,14 @@ class Band:
     href=""
 
 
+# tasklist=0
+# def threadManagment(task, args):
+#     global tasklist
+#     while(tasklist>threadsCount):
+#         pass
+#     tasklist=tasklist+1
+#     thread.start_new_thread(task,args)
+#     print "added"
 
 def getUrisOfBand(html):
     urisstrings=[]
@@ -23,33 +32,43 @@ def getUrisOfBand(html):
         #print uris[0]['href']
     return urisstrings
 
+def parseOneBand(uri):
+    try:
+        band =Band()
+        f = urllib2.urlopen(uri)
+        html = f.read()
+        soup = BeautifulSoup(html)
+        name=soup.find('h1',itemprop="name")
+        if not name is None:
+            band.name=name.string
+        telephone=soup.find('span',itemprop="telephone")
+        if not telephone is None:
+            band.telephone=telephone.string
+        video=soup.find('object',type="application/x-shockwave-flash")
+        if not video is None:
+                band.video=video["data"]
+        address=soup.find('div',itemprop="address").getText()
+        if not address is None:
+            band.address=address
+        band.href=uri
+        bands.append(band)
+
+        v=soup.findAll('meta',itemprop="reviewRating")
+        if not v is None:
+            for vi in v:
+                if not vi["content"]=="5":
+                    print band.href
+                    print vi["content"]
+    except:
+        pass
+    print "OK"
+
+
 def getBandData(list):
     for uri in list:
-        try:
-            f = urllib2.urlopen(uri)
-            html = f.read()
-            soup = BeautifulSoup(html)
-            telephone=soup.find('span',itemprop="telephone")
-            name=soup.find('h1',itemprop="name")
-            band =Band()
-            band.name=name.string
-            band.telephone=telephone.string
-            v=soup.find('object',type="application/x-shockwave-flash")
-            if not v is None:
-                band.video=v["data"]
-            band.address=soup.find('div',itemprop="address").getText()
-            band.href=uri
-            bands.append(band)
+        #parseOneBand(uri)
+        thread.start_new_thread(parseOneBand,(uri,))
 
-            v=soup.findAll('meta',itemprop="reviewRating")
-            if not v is None:
-                for vi in v:
-                    if not vi["content"]=="5":
-                        print band.href
-                        print vi["content"]
-        except:
-            pass
-        print "OK"
 
 
 def getWojewodzctwo(baseURL,range_):
@@ -57,18 +76,20 @@ def getWojewodzctwo(baseURL,range_):
         f = urllib2.urlopen(baseURL+"/"+str(x))
         html = f.read()
         list =getUrisOfBand(html)
-        # thread.start_new_thread(getBandData,(list,))
-        getBandData(list)
+        thread.start_new_thread(getBandData,(list,))
+        #getBandData(list)
 
 
 def htmlResult():
     page="<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>Bands</title></head><body>"
     i=0
     for bnd in bands:
+
         i+=1
         page+="<h1>"+str(i)+" "+bnd.name+"</h1>"
         page+="<br/><a href='"+bnd.href+"'a>klik</a> "
-        page+="<br/>"+bnd.telephone
+        if not bnd.telephone is None:
+            page+="<br/>"+bnd.telephone
         page+="<br/>"+bnd.address
         if not bnd.video=="":
             page+="<br/><a href='"+bnd.video+"'a>VIDEO</a> "
@@ -94,7 +115,8 @@ for a in li:
     count=len(num)+2
     print count
     print baseUrl
-    getWojewodzctwo(baseUrl,count)
+    #getWojewodzctwo(baseUrl,count)
+    thread.start_new_thread(getWojewodzctwo,(baseUrl,count,))
 
 
 
