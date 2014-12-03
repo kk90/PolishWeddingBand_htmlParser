@@ -1,6 +1,7 @@
 __author__ = 'krzysiek'
 from BeautifulSoup import BeautifulSoup
 import urllib2
+import thread
 bands=[]
 i=0
 class Band:
@@ -24,29 +25,31 @@ def getUrisOfBand(html):
 
 def getBandData(list):
     for uri in list:
-        f = urllib2.urlopen(uri)
-        html = f.read()
-        soup = BeautifulSoup(html)
-        telephone=soup.find('span',itemprop="telephone")
-        name=soup.find('h1',itemprop="name")
-        band =Band()
-        band.name=name.string
-        band.telephone=telephone.string
-        v=soup.find('object',type="application/x-shockwave-flash")
-        if not v is None:
-            band.video=v["data"]
-        band.address=soup.find('div',itemprop="address").getText()
-        band.href=uri
-        bands.append(band)
+        try:
+            f = urllib2.urlopen(uri)
+            html = f.read()
+            soup = BeautifulSoup(html)
+            telephone=soup.find('span',itemprop="telephone")
+            name=soup.find('h1',itemprop="name")
+            band =Band()
+            band.name=name.string
+            band.telephone=telephone.string
+            v=soup.find('object',type="application/x-shockwave-flash")
+            if not v is None:
+                band.video=v["data"]
+            band.address=soup.find('div',itemprop="address").getText()
+            band.href=uri
+            bands.append(band)
 
-        v=soup.findAll('meta',itemprop="reviewRating")
-        if not v is None:
-            for vi in v:
-                if not vi["content"]=="5":
-                    print band.href
-                    print vi["content"]
-
-        print band.name +"    OK"
+            v=soup.findAll('meta',itemprop="reviewRating")
+            if not v is None:
+                for vi in v:
+                    if not vi["content"]=="5":
+                        print band.href
+                        print vi["content"]
+        except:
+            pass
+        print "OK"
 
 
 def getWojewodzctwo(baseURL,range_):
@@ -54,7 +57,8 @@ def getWojewodzctwo(baseURL,range_):
         f = urllib2.urlopen(baseURL+"/"+str(x))
         html = f.read()
         list =getUrisOfBand(html)
-        getBandData(list)
+        thread.start_new_thread(getBandData,(list,))
+        # getBandData(list)
 
 
 def htmlResult():
