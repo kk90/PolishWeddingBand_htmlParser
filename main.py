@@ -1,7 +1,7 @@
 __author__ = 'krzysiek'
 from BeautifulSoup import BeautifulSoup
 import urllib2
-import thread
+# import thread
 bands=[]
 i=0
 class Band:
@@ -57,8 +57,8 @@ def getWojewodzctwo(baseURL,range_):
         f = urllib2.urlopen(baseURL+"/"+str(x))
         html = f.read()
         list =getUrisOfBand(html)
-        thread.start_new_thread(getBandData,(list,))
-        # getBandData(list)
+        # thread.start_new_thread(getBandData,(list,))
+        getBandData(list)
 
 
 def htmlResult():
